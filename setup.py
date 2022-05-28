@@ -36,7 +36,7 @@ from setuptools import find_packages, setup
 
 
 # name of python project
-PROJECT = "project"
+PROJECT = "registry"
 
 extras = {}
 extras["testing"] = ["pytest", "pytest-mock", "pytest-cov", "pytest-xdist"]
@@ -76,7 +76,7 @@ def install(version):
         packages=find_packages(""),
         install_requires=[],
         extras_require=extras,
-        python_requires=">=3.7.0",
+        python_requires=">=3.10",
     )
 
 

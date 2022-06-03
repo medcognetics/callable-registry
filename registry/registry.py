@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Callable, Dict, Generic, List, Optional, ParamSpec, TypeVar, cast
 
 
@@ -25,11 +26,17 @@ class Registry(Generic[P, T]):
     """A registry is used to register callables and associated metadata under a string name for easy access.
 
     Modeled after https://github.com/PyTorchLightning/lightning-flash/flash/core/registry.py
+
+    Args:
+        name: Name of the registry
+        bind_metadata: If ``True``, treat metadata as keyword args that will be bound using :func:`functools.partial`
+        bound: A callable from which to bind generic type variables. Used only for type checking.
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, bind_metadata: bool = False, bound: Optional[Callable[P, T]] = None) -> None:
         self.name = name
         self.functions: Dict[str, RegisteredFunction[P, T]] = {}
+        self.bind_metadata = bind_metadata
 
     def __len__(self) -> int:
         return len(self.functions)
@@ -38,10 +45,19 @@ class Registry(Generic[P, T]):
         return any(key == e.name for e in self.functions.values())
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name={self.name}, functions={self.functions.keys()})"
+        return (
+            f"{self.__class__.__name__}(name={self.name}, "
+            f"bind_metadata={self.bind_metadata}, "
+            f"functions={self.functions.keys()})"
+        )
 
-    def get(self, key: str) -> Callable[P, T]:
-        return cast(Callable[P, T], self.get_with_metadata(key).fn)
+    def get(self, key: str, **kwargs) -> Callable[P, T]:
+        item = self.get_with_metadata(key)
+        fn = cast(Callable[P, T], item.fn)
+        metadata = item.metadata
+        if self.bind_metadata:
+            kwargs = {**metadata, **kwargs}
+        return partial(fn, **kwargs) if kwargs else fn
 
     def get_with_metadata(self, key: str) -> RegisteredFunction[P, T]:
         if key not in self:

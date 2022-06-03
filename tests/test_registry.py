@@ -98,3 +98,30 @@ def test_available_keys(names):
     for name in names:
         reg(func, name=name)
     assert reg.available_keys() == sorted(names)
+
+
+@pytest.mark.parametrize("bind_metadata", [False, True])
+@pytest.mark.parametrize("kwargs", [{}, {"kwargs": True}])
+@pytest.mark.parametrize("metadata", [{}, {"metadata": True}])
+def test_kwargs(mocker, bind_metadata, kwargs, metadata):
+    reg = Registry("name", bind_metadata=bind_metadata)
+
+    def func(**_kwargs):
+        expected = kwargs
+        if bind_metadata:
+            expected = {**expected, **metadata}
+        assert _kwargs == expected
+
+    reg(func, name="name", **metadata)
+    output = reg.get("name", **kwargs)
+    output()
+
+
+def test_type_annotation():
+    def func(x: int, y: int) -> float:
+        return float(x + y)
+
+    reg = Registry("name", bound=func)
+    reg(func, name="func")
+    x = reg.get("func")
+    assert x(1, 2) == float(3)

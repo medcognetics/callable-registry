@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from typing import Callable
+
 import pytest
 
 from registry import Registry
@@ -125,3 +127,21 @@ def test_type_annotation():
     reg(func, name="func")
     x = reg.get("func")
     assert x(1, 2) == float(3)
+
+
+def test_selective_kwarg_forwarding():
+    reg = Registry("name", bind_metadata=True, bound=Callable[..., float])
+
+    @reg(name="func1", y=1)
+    def func1(x: int, y: int, z: float) -> float:
+        return float(x + y + z)
+
+    @reg(name="func2", y=2)
+    def func2(x: int, y: int) -> float:
+        return float(x + y)
+
+    kwargs = {"z": 3}
+    output1 = reg.get("func1", **kwargs)(x=0)
+    output2 = reg.get("func2", **kwargs)(x=0)
+    assert output1 == 1 + 3
+    assert output2 == 2

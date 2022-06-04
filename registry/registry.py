@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, Generic, List, Optional, ParamSpec, TypeVar, cast
+from inspect import signature
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, ParamSpec, TypeVar, cast
 
 
 T = TypeVar("T")
@@ -55,8 +56,12 @@ class Registry(Generic[P, T]):
         item = self.get_with_metadata(key)
         fn = cast(Callable[P, T], item.fn)
         metadata = item.metadata
+        # bind registered metadata if requested, preferring **kwargs as overrides
         if self.bind_metadata:
             kwargs = {**metadata, **kwargs}
+        # if the function doesn't support **kwargs, filter kwargs to bind based on signature
+        if not self._has_var_kwargs(fn):
+            kwargs = {k: v for k, v in kwargs.items() if k in self._iterate_arg_names(fn)}
         return partial(fn, **kwargs) if kwargs else fn
 
     def get_with_metadata(self, key: str) -> RegisteredFunction[P, T]:
@@ -120,3 +125,15 @@ class Registry(Generic[P, T]):
 
     def available_keys(self) -> List[str]:
         return sorted(self.functions.keys())
+
+    @staticmethod
+    def _iterate_arg_names(func: Callable) -> Iterator[str]:
+        sig = signature(func)
+        for name, param in sig.parameters.items():
+            if param.kind == param.POSITIONAL_OR_KEYWORD:
+                yield name
+
+    @staticmethod
+    def _has_var_kwargs(func: Callable) -> bool:
+        sig = signature(func)
+        return any(p.kind == p.VAR_KEYWORD for p in sig.parameters.values())

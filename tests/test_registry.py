@@ -1,147 +1,175 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from dataclasses import dataclass
 from typing import Callable
 
 import pytest
 
-from registry import Registry
+from registry import RegisteredFunction, Registry
 
 
-@pytest.mark.parametrize("name", ["name1", "name2"])
-def test_construct(name):
-    reg = Registry(name)
-    assert reg.name == name
-    assert len(reg) == 0
+@dataclass
+class CallableClass:
+    foo: int = 1
+
+    def __call__(self, *args, **kwargs):
+        ...
 
 
-def test_repr():
-    reg = Registry("name")
-    s = str(reg)
-    assert isinstance(s, str)
+@dataclass
+class CallableClassWithArg:
+    foo: int = 1
+
+    def __call__(self, x: int):
+        return x
 
 
-@pytest.mark.parametrize("func_name", ["func1", "func2"])
-def test_register_class(func_name):
-    reg = Registry("name")
-    assert reg.name == "name"
-
-    @reg(name=func_name)
-    class DummyClass:
-        pass
-
-    assert func_name in reg
-    assert reg.get(func_name) is DummyClass
+def dummy_func(*args, **kwargs):
+    ...
 
 
-@pytest.mark.parametrize("func_name", ["func1", "func2"])
-def test_register_function(func_name):
-    reg = Registry("name")
+class TestRegisteredFunction:
+    def test_call(self):
+        fn = CallableClassWithArg()
+        func = RegisteredFunction(fn, "foo")
+        assert func(x=1) == 1
 
-    def func():
-        pass
+    @pytest.mark.parametrize(
+        "fn,exp",
+        [
+            pytest.param(dummy_func, False),
+            pytest.param(str, True),
+            pytest.param(CallableClass, True),
+            pytest.param(CallableClass(), False),
+        ],
+    )
+    def test_is_type(self, fn, exp):
+        func = RegisteredFunction(fn, "foo")
+        assert func.is_type == exp
 
-    reg(func, name=func_name)
-    assert func_name in reg
-    assert reg.get(func_name) is func
+    @pytest.mark.parametrize(
+        "fn,exp",
+        [
+            pytest.param(dummy_func, dummy_func),
+            pytest.param(CallableClass, CallableClass()),
+            pytest.param(CallableClass(), CallableClass()),
+        ],
+    )
+    def test_instantiate(self, fn, exp):
+        func = RegisteredFunction(fn, "foo")
+        inst = func.instantiate(bar="bar")
+        assert inst.fn == exp
 
+    @pytest.mark.parametrize(
+        "fn,exp",
+        [
+            pytest.param(dummy_func, dummy_func),
+            pytest.param(CallableClass, CallableClass(foo=2)),
+            pytest.param(CallableClass(), CallableClass()),
+        ],
+    )
+    def test_instantiate_with_metadata(self, fn, exp):
+        func = RegisteredFunction(fn, "foo", {"foo": 2})
+        inst = func.instantiate_with_metadata(bar="bar")
+        assert inst.fn == exp
 
-@pytest.mark.parametrize("func_name", ["func1", "func2"])
-def test_contains(func_name):
-    reg = Registry("name")
+    def test_cast(self):
+        fn = CallableClass()
+        func = RegisteredFunction(fn, "foo")
+        casted_func = func.cast(Callable[[int], int])
+        assert casted_func == func
 
-    @reg(name=func_name)
-    class DummyClass:
-        pass
+    def test_bind(self):
+        fn = CallableClassWithArg()
+        func = RegisteredFunction(fn, "foo")
+        bound = func.bind(x=1, y=2)
+        assert bound() == 1
 
-    assert func_name in reg
-
-
-@pytest.mark.parametrize("length", [0, 1, 2])
-def test_length(length):
-    reg = Registry("name")
-
-    def func():
-        pass
-
-    for i in range(length):
-        reg(func, name=f"func-{i}")
-    assert len(reg) == length
-
-
-def test_get_with_metadata():
-    reg = Registry("name")
-    metadata = dict(data1="1", data2="2")
-
-    name = "func"
-
-    @reg(name=name, **metadata)
-    class DummyClass:
-        pass
-
-    result = reg.get_with_metadata(name)
-    assert result.fn is DummyClass
-    assert result.name == name
-    assert result.metadata == metadata
-
-
-@pytest.mark.parametrize(
-    "names",
-    [
-        ("f1",),
-        ("f1", "f2"),
-    ],
-)
-def test_available_keys(names):
-    reg = Registry("name")
-
-    def func():
-        pass
-
-    for name in names:
-        reg(func, name=name)
-    assert reg.available_keys() == sorted(names)
+    def test_bind_with_metadata(self):
+        fn = CallableClassWithArg()
+        func = RegisteredFunction(fn, "foo", {"x": 1})
+        bound = func.bind_metadata(y=2)
+        assert bound() == 1
 
 
-@pytest.mark.parametrize("bind_metadata", [False, True])
-@pytest.mark.parametrize("kwargs", [{}, {"kwargs": True}])
-@pytest.mark.parametrize("metadata", [{}, {"metadata": True}])
-def test_kwargs(mocker, bind_metadata, kwargs, metadata):
-    reg = Registry("name", bind_metadata=bind_metadata)
+class TestRegistry:
+    @pytest.mark.parametrize("name", ["name1", "name2"])
+    def test_construct(self, name):
+        reg = Registry(name)
+        assert reg.name == name
+        assert len(reg) == 0
 
-    def func(**_kwargs):
-        expected = kwargs
-        if bind_metadata:
-            expected = {**expected, **metadata}
-        assert _kwargs == expected
+    def test_repr(self):
+        reg = Registry("name")
+        s = str(reg)
+        assert isinstance(s, str)
 
-    reg(func, name="name", **metadata)
-    output = reg.get("name", **kwargs)
-    output()
+    @pytest.mark.parametrize("func_name", ["func1", "func2"])
+    def test_register_class(self, func_name):
+        reg = Registry("name")
+        assert reg.name == "name"
 
+        @reg(name=func_name)
+        class DummyClass:
+            pass
 
-def test_type_annotation():
-    def func(x: int, y: int) -> float:
-        return float(x + y)
+        assert func_name in reg
+        assert reg.get(func_name).fn is DummyClass
 
-    reg = Registry("name", bound=func)
-    reg(func, name="func")
-    x = reg.get("func")
-    assert x(1, 2) == float(3)
+    @pytest.mark.parametrize("func_name", ["func1", "func2"])
+    def test_register_function(self, func_name):
+        reg = Registry("name")
 
+        def func(x: int) -> None:
+            pass
 
-def test_selective_kwarg_forwarding():
-    reg = Registry("name", bind_metadata=True, bound=Callable[..., float])
+        reg(func, name=func_name)
+        assert func_name in reg
+        assert reg.get(func_name).fn is func
 
-    @reg(name="func1", y=1)
-    def func1(x: int, y: int, z: float) -> float:
-        return float(x + y + z)
+    @pytest.mark.parametrize("func_name", ["func1", "func2"])
+    def test_contains(self, func_name):
+        reg = Registry("name")
 
-    @reg(name="func2", y=2)
-    def func2(x: int, y: int) -> float:
-        return float(x + y)
+        @reg(name=func_name)
+        class DummyClass:
+            pass
 
-    kwargs = {"z": 3}
-    output1 = reg.get("func1", **kwargs)(x=0)
-    output2 = reg.get("func2", **kwargs)(x=0)
-    assert output1 == 1 + 3
-    assert output2 == 2
+        assert func_name in reg
+
+    @pytest.mark.parametrize("length", [0, 1, 2])
+    def test_length(self, length):
+        reg = Registry("name")
+
+        def func():
+            pass
+
+        for i in range(length):
+            reg(func, name=f"func-{i}")
+        assert len(reg) == length
+
+    @pytest.mark.parametrize(
+        "names",
+        [
+            ("f1",),
+            ("f1", "f2"),
+        ],
+    )
+    def test_available_keys(self, names):
+        reg = Registry("name")
+
+        def func():
+            pass
+
+        for name in names:
+            reg(func, name=name)
+        assert reg.available_keys() == sorted(names)
+
+    def test_type_annotation(self):
+        def func(x: int, y: int) -> float:
+            return float(x + y)
+
+        reg = Registry("name", bound=Callable[[int, int], float])
+        reg(func, name="func")
+        x = reg.get("func")
+        assert x(1, 2) == float(3)

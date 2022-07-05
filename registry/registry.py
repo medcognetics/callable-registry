@@ -3,7 +3,13 @@
 from dataclasses import dataclass
 from functools import partial
 from inspect import signature
-from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, ParamSpec, TypeVar, cast
+from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, TypeVar, cast
+
+
+try:
+    from typing import ParamSpec
+except ImportError:
+    from typing_extensions import ParamSpec
 
 
 T = TypeVar("T")

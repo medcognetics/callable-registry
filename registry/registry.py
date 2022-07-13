@@ -70,13 +70,13 @@ class RegisteredFunction(Generic[P, T]):
         r"""Checks if ``fn`` is a type"""
         return isinstance(self.fn, type)
 
-    def instantiate(self, **kwargs) -> Any:
+    def instantiate(self, **kwargs) -> "RegisteredFunction":
         if self.is_type:
             fn = bind_relevant_kwargs(self.fn, **kwargs)()
             return replace(self, fn=fn)
         return self
 
-    def instantiate_with_metadata(self, **kwargs) -> Any:
+    def instantiate_with_metadata(self, **kwargs) -> "RegisteredFunction":
         kwargs = {**self.metadata, **kwargs}
         return self.instantiate(**kwargs)
 

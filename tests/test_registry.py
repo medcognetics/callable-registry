@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from dataclasses import dataclass
+from functools import partial
 from typing import Callable
 
 import pytest
@@ -66,6 +67,7 @@ class TestRegisteredFunction:
             pytest.param(dummy_func, dummy_func),
             pytest.param(CallableClass, CallableClass(foo=2)),
             pytest.param(CallableClass(), CallableClass()),
+            pytest.param(partial(CallableClass, foo=2), CallableClass(foo=2)),
         ],
     )
     def test_instantiate_with_metadata(self, fn, exp):

@@ -49,6 +49,10 @@ def bind_relevant_kwargs(func: Callable[..., T], **kwargs) -> Callable[..., T]:
     if not kwargs:
         return func
 
+    # edge case to handle signature hidden in a functools.partial
+    if isinstance(func, partial):
+        return bind_relevant_kwargs(func.func, **{**func.keywords, **kwargs})
+
     # for a function with **kwargs, we can bind everything
     if has_var_kwargs(func):
         return partial(func, **kwargs)
@@ -68,6 +72,8 @@ class RegisteredFunction(Generic[P, T]):
     @property
     def is_type(self) -> bool:
         r"""Checks if ``fn`` is a type"""
+        if isinstance(self.fn, partial):
+            return isinstance(self.fn.func, type)
         return isinstance(self.fn, type)
 
     def instantiate(self, **kwargs) -> "RegisteredFunction":

@@ -195,3 +195,13 @@ class Registry(Generic[P, T]):
 
     def available_keys(self) -> List[str]:
         return sorted(self.functions.keys())
+
+    def register_dict(self, fn_dict: Dict[str, Callable[P, T]], override: bool = False) -> None:
+        r"""Register a dictionary of functions. The keys of the dictionary will be used as the name of the function.
+
+        Args:
+            fn_dict: A dictionary of functions to register.
+            override: If ``True``, override existing functions.
+        """
+        for name, fn in fn_dict.items():
+            self(fn=fn, name=name, override=override)

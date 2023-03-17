@@ -175,3 +175,19 @@ class TestRegistry:
         reg(func, name="func")
         x = reg.get("func")
         assert x(1, 2) == float(3)
+
+    @pytest.mark.parametrize(
+        "inp",
+        [
+            {"noop": lambda x: x},
+            {"add1": lambda x: x + 1},
+            {"noop": lambda x: x, "add1": lambda x: x + 1},
+        ],
+    )
+    def test_register_dict(self, inp):
+        reg = Registry("name")
+        reg.register_dict(inp)
+
+        for k, v in inp.items():
+            assert k in reg
+            assert reg.get(k).fn is v

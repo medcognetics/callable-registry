@@ -7,9 +7,9 @@ from typing import Any, Callable, Dict, Generic, Iterator, List, Optional, Type,
 
 
 try:
-    from typing import ParamSpec
+    from typing import ParamSpec  # pragma: no cover
 except ImportError:
-    from typing_extensions import ParamSpec
+    from typing_extensions import ParamSpec  # pragma: no cover
 
 try:
     from typing import Self
@@ -136,7 +136,7 @@ class Registry(Generic[P, T]):
         elif callable(key):
             result = RegisteredFunction(key, "", {})
         else:
-            raise TypeError(f"`key` should be str or callable, found {type(key)}")
+            raise TypeError(f"`key` should be str or callable, found {type(key)}")  # pragma: no cover
         return cast(RegisteredFunction[P, T], result)
 
     def remove(self, key: str) -> None:
@@ -150,7 +150,7 @@ class Registry(Generic[P, T]):
         metadata: Optional[Dict[str, Any]] = None,
     ):
         if not callable(fn):
-            raise TypeError(f"You can only register a callable, found: {fn}")
+            raise TypeError(f"You can only register a callable, found: {fn}")  # pragma: no cover
 
         if name is None:
             if hasattr(fn, "func"):
@@ -162,7 +162,7 @@ class Registry(Generic[P, T]):
         item: RegisteredFunction[P, T] = RegisteredFunction(fn, name, metadata or {})  # type: ignore
 
         if override and name in self:
-            raise RuntimeError(
+            raise RuntimeError(  # pragma: no cover
                 f"Function with name: {name} and metadata: {metadata} is already present within {self}."
                 " HINT: Use `override=True`."
             )
@@ -185,7 +185,7 @@ class Registry(Generic[P, T]):
 
         # raise the error ahead of time
         if not (name is None or isinstance(name, str)):
-            raise TypeError(f"`name` must be a str, found {name}")
+            raise TypeError(f"`name` must be a str, found {name}")  # pragma: no cover
 
         def _register(cls):
             self._register_function(fn=cls, name=name, override=override, metadata=metadata)

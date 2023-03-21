@@ -12,9 +12,9 @@ except ImportError:
     from typing_extensions import ParamSpec  # pragma: no cover
 
 try:
-    from typing import Self
+    from typing import Self  # pragma: no cover
 except ImportError:
-    from typing_extensions import Self
+    from typing_extensions import Self  # pragma: no cover
 
 
 T = TypeVar("T")

@@ -161,7 +161,7 @@ class Registry(Generic[P, T]):
 
         item: RegisteredFunction[P, T] = RegisteredFunction(fn, name, metadata or {})  # type: ignore
 
-        if override and name in self:
+        if not override and name in self:
             raise RuntimeError(  # pragma: no cover
                 f"Function with name: {name} and metadata: {metadata} is already present within {self}."
                 " HINT: Use `override=True`."

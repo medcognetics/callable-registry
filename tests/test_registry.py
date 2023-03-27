@@ -191,3 +191,15 @@ class TestRegistry:
         for k, v in inp.items():
             assert k in reg
             assert reg.get(k).fn is v
+
+    @pytest.mark.parametrize(
+        "override",
+        [
+            True,
+            pytest.param(False, marks=pytest.mark.xfail(raises=RuntimeError, strict=True)),
+        ],
+    )
+    def test_override(self, override):
+        reg = Registry("name")
+        reg(lambda x: x, name="func")
+        reg(lambda x: x + 1, name="func", override=override)

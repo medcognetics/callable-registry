@@ -138,3 +138,4 @@ coverage.xml
 *.orig.*
 registry/version.py
 .pdm.toml
+.pdm-python

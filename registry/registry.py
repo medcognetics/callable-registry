@@ -34,7 +34,7 @@ def iterate_arg_names(func: Callable) -> Iterator[str]:
     r"""Iterates over the arg names of a callable"""
     sig = signature(func)
     for name, param in sig.parameters.items():
-        if param.kind == param.POSITIONAL_OR_KEYWORD:
+        if param.kind in (param.POSITIONAL_OR_KEYWORD, param.KEYWORD_ONLY):
             yield name
 
 

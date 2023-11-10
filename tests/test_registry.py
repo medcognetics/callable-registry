@@ -25,6 +25,14 @@ class CallableClassWithArg:
         return x
 
 
+@dataclass(kw_only=True)
+class KeywordOnlyClass:
+    foo: int = 1
+
+    def __call__(self, x: int):
+        return x
+
+
 def dummy_func(*args, **kwargs):
     ...
 
@@ -42,6 +50,7 @@ class TestRegisteredFunction:
             pytest.param(str, True),
             pytest.param(CallableClass, True),
             pytest.param(CallableClass(), False),
+            pytest.param(KeywordOnlyClass, True),
         ],
     )
     def test_is_type(self, fn, exp):
@@ -54,6 +63,8 @@ class TestRegisteredFunction:
             pytest.param(dummy_func, dummy_func),
             pytest.param(CallableClass, CallableClass()),
             pytest.param(CallableClass(), CallableClass()),
+            pytest.param(KeywordOnlyClass, KeywordOnlyClass()),
+            pytest.param(KeywordOnlyClass(), KeywordOnlyClass()),
         ],
     )
     def test_instantiate(self, fn, exp):
@@ -68,6 +79,8 @@ class TestRegisteredFunction:
             pytest.param(CallableClass, CallableClass(foo=2)),
             pytest.param(CallableClass(), CallableClass()),
             pytest.param(partial(CallableClass, foo=2), CallableClass(foo=2)),
+            pytest.param(KeywordOnlyClass, KeywordOnlyClass(foo=2)),
+            pytest.param(partial(KeywordOnlyClass, foo=2), KeywordOnlyClass(foo=2)),
         ],
     )
     def test_instantiate_with_metadata(self, fn, exp):

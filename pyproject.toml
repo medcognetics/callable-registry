@@ -45,8 +45,9 @@ use_parentheses = false
 [tool.pyright]
 pythonVersion = "3.11"
 
-[tool.pdm]
-version = { source = "scm" }
+[tool.pdm.version]
+source = "file"
+path = "registry/version.py"
 
 [tool.pdm.dev-dependencies]
 test = [
@@ -61,6 +62,10 @@ quality = [
   "black",
   "flake8",
   "isort",
+]
+dist = [
+  "build",
+  "twine",
 ]
 
 [tool.pytest.ini_options]

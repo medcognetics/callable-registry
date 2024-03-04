@@ -136,6 +136,5 @@ coverage.xml
 .coverage
 
 *.orig.*
-registry/version.py
 .pdm.toml
 .pdm-python

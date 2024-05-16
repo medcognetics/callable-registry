@@ -3,17 +3,16 @@ requires = ["pdm-pep517>=1.0"]
 build-backend = "pdm.pep517.api"
 
 [project]
-name = "registry"
+name = "callable-registry"
 description = ""
 requires-python = ">=3.7"
 authors = [
-    {name = "Scott Chase Waggener", email = "tidalpaladin@protonmail.com"},
+  { name = "Scott Chase Waggener", email = "tidalpaladin@protonmail.com" },
+  { name = "Tim Cogan", email = "tim@cogan.dev" },
 ]
-dependencies = [
-  "typing_extensions; python_version < '3.11'",
-]
+dependencies = ["typing_extensions; python_version < '3.11'"]
 readme = "README.md"
-license = {text = "Apache"}
+license = { text = "Apache" }
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -50,28 +49,12 @@ source = "file"
 path = "registry/version.py"
 
 [tool.pdm.dev-dependencies]
-test = [
-  "pytest",
-  "pytest-mock",
-  "pytest-cov",
-  "coverage",
-]
-quality = [
-  "autoflake",
-  "autopep8",
-  "black",
-  "flake8",
-  "isort",
-]
-dist = [
-  "build",
-  "twine",
-]
+test = ["pytest", "pytest-mock", "pytest-cov", "coverage"]
+quality = ["autoflake", "autopep8", "black", "flake8", "isort"]
+dist = ["build", "twine"]
 
 [tool.pytest.ini_options]
-markers = [
-  "ci_skip",
-]
+markers = ["ci_skip"]
 filterwarnings = []
 
 # Sample script config
